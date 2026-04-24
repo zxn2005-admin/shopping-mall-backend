@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.geekie.shop.shoppingmall.mapper.PaymentMapper">
+
+    <!-- BaseResultMap -->
+    <resultMap id="BaseResultMap" type="site.geekie.shop.shoppingmall.entity.PaymentDO">
+        <id column="id" property="id"/>
+        <result column="payment_no" property="paymentNo"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="user_id" property="userId"/>
+        <result column="amount" property="amount"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="payment_status" property="paymentStatus"/>
+        <result column="trade_no" property="tradeNo"/>
+        <result column="code_url" property="codeUrl"/>
+        <result column="notify_time" property="notifyTime"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- Base_Column_List -->
+    <sql id="Base_Column_List">
+        id, payment_no, order_no, user_id, amount, payment_method,
+        payment_status, trade_no, code_url, notify_time, created_at, updated_at
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据支付流水号查询 -->
+    <select id="findByPaymentNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE payment_no = #{paymentNo}
+    </select>
+
+    <!-- 查询订单下 SUCCESS 状态的支付记录（用于退款、已支付校验） -->
+    <select id="findSuccessByOrderNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE order_no = #{orderNo}
+          AND payment_status = 'SUCCESS'
+        LIMIT 1
+    </select>
+
+    <!-- 根据第三方交易号查询 -->
+    <select id="findByTradeNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE trade_no = #{tradeNo}
+        LIMIT 1
+    </select>
+
+    <!-- 查询订单下所有 PENDING 状态的支付记录 -->
+    <select id="findPendingByOrderNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE order_no = #{orderNo}
+          AND payment_status = 'PENDING'
+    </select>
+
+    <!-- 查询订单下所有 SUCCESS 状态的支付记录（按创建时间升序） -->
+    <select id="findSuccessListByOrderNo" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM mall_payment
+        WHERE order_no = #{orderNo}
+          AND payment_status = 'SUCCESS'
+        ORDER BY created_at ASC
+    </select>
+
+    <!-- 插入支付记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mall_payment (
+            payment_no, order_no, user_id, amount,
+            payment_method, payment_status, trade_no, code_url
+        ) VALUES (
+            #{paymentNo}, #{orderNo}, #{userId}, #{amount},
+            #{paymentMethod}, #{paymentStatus}, #{tradeNo}, #{codeUrl}
+        )
+    </insert>
+
+    <!-- 更新支付记录 -->
+    <update id="updateById">
+        UPDATE mall_payment
+        <set>
+            <if test="paymentStatus != null">payment_status = #{paymentStatus},</if>
+            <if test="tradeNo != null">trade_no = #{tradeNo},</if>
+            <if test="codeUrl != null">code_url = #{codeUrl},</if>
+            <if test="notifyTime != null">notify_time = #{notifyTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新支付状态 -->
+    <update id="updateStatus">
+        UPDATE mall_payment
+        SET payment_status = #{paymentStatus},
+            trade_no = #{tradeNo},
+            notify_time = NOW()
+        WHERE payment_no = #{paymentNo}
+    </update>
+
+</mapper>

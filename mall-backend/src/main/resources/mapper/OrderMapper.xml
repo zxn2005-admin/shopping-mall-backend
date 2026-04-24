@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="site.geekie.shop.shoppingmall.mapper.OrderMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="site.geekie.shop.shoppingmall.entity.OrderDO">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="user_id" property="userId"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="pay_amount" property="payAmount"/>
+        <result column="freight" property="freight"/>
+        <result column="status" property="status"/>
+        <result column="payment_no" property="paymentNo"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="payment_time" property="paymentTime"/>
+        <result column="ship_time" property="shipTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="receiver_phone" property="receiverPhone"/>
+        <result column="receiver_address" property="receiverAddress"/>
+        <result column="remark" property="remark"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 基础字段列表（仅mall_order表字段，不含支付单号） -->
+    <sql id="Base_Column_List">
+        ord.id, ord.order_no, ord.user_id, ord.total_amount, ord.pay_amount, ord.freight, ord.status,
+        ord.payment_method, ord.payment_time, ord.ship_time, ord.complete_time,
+        ord.receiver_name, ord.receiver_phone, ord.receiver_address, ord.remark,
+        ord.created_at, ord.updated_at
+    </sql>
+
+    <!-- 完整字段列表（包含支付单号，LEFT JOIN mall_payment） -->
+    <sql id="Full_Column_List">
+        ord.id, ord.order_no, ord.user_id, ord.total_amount, ord.pay_amount, ord.freight, ord.status,
+        ord.payment_method, ord.payment_time, ord.ship_time, ord.complete_time,
+        ord.receiver_name, ord.receiver_phone, ord.receiver_address, ord.remark,
+        ord.created_at, ord.updated_at,
+        pay.payment_no
+    </sql>
+
+    <!-- 根据订单号查询订单 -->
+    <select id="findByOrderNo" resultMap="BaseResultMap">
+        SELECT <include refid="Full_Column_List"/>
+        FROM mall_order ord
+        LEFT JOIN mall_payment pay ON ord.order_no = pay.order_no AND pay.payment_status = 'SUCCESS'
+        WHERE ord.order_no = #{orderNo}
+    </select>
+
+    <!-- 根据用户ID查询所有订单 -->
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Full_Column_List"/>
+        FROM mall_order ord
+        LEFT JOIN mall_payment pay ON ord.order_no = pay.order_no AND pay.payment_status = 'SUCCESS'
+        WHERE ord.user_id = #{userId}
+        ORDER BY ord.created_at DESC
+    </select>
+
+    <!-- 根据用户ID和状态查询订单 -->
+    <select id="findByUserIdAndStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Full_Column_List"/>
+        FROM mall_order ord
+        LEFT JOIN mall_payment pay ON ord.order_no = pay.order_no AND pay.payment_status = 'SUCCESS'
+        WHERE ord.user_id = #{userId} AND ord.status = #{status}
+        ORDER BY ord.created_at DESC
+    </select>
+
+    <!-- 查询所有订单 -->
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT <include refid="Full_Column_List"/>
+        FROM mall_order ord
+        LEFT JOIN mall_payment pay ON ord.order_no = pay.order_no AND pay.payment_status = 'SUCCESS'
+        ORDER BY ${sortColumn} ${sortDir}
+    </select>
+
+    <!-- 根据状态查询所有订单 -->
+    <select id="findAllByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Full_Column_List"/>
+        FROM mall_order ord
+        LEFT JOIN mall_payment pay ON ord.order_no = pay.order_no AND pay.payment_status = 'SUCCESS'
+        WHERE ord.status = #{status}
+        ORDER BY ${sortColumn} ${sortDir}
+    </select>
+
+    <!-- 插入订单 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mall_order (
+            order_no, user_id, total_amount, pay_amount, freight, status,
+            receiver_name, receiver_phone, receiver_address, remark
+        ) VALUES (
+            #{orderNo}, #{userId}, #{totalAmount}, #{payAmount}, #{freight}, #{status},
+            #{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}
+        )
+    </insert>
+
+    <!-- 更新订单状态 -->
+    <update id="updateStatus">
+        UPDATE mall_order
+        SET status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+    </update>
+
+    <!-- 原子性更新订单状态（乐观锁） -->
+    <update id="compareAndUpdateStatus">
+        UPDATE mall_order
+        SET status = #{newStatus},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+          AND status = #{expectedStatus}
+    </update>
+
+    <!-- 更新支付方式 -->
+    <update id="updatePaymentMethod">
+        UPDATE mall_order
+        SET payment_method = #{paymentMethod},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+    </update>
+
+    <!-- 更新支付时间 -->
+    <update id="updatePaymentTime">
+        UPDATE mall_order
+        SET payment_time = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+    </update>
+
+    <!-- 更新发货时间 -->
+    <update id="updateShipTime">
+        UPDATE mall_order
+        SET ship_time = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+    </update>
+
+    <!-- 更新完成时间 -->
+    <update id="updateCompleteTime">
+        UPDATE mall_order
+        SET complete_time = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE order_no = #{orderNo}
+    </update>
+
+    <!-- 统计用户订单数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM mall_order ord WHERE ord.user_id = #{userId}
+    </select>
+
+    <!-- 统计所有订单数 -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM mall_order ord
+    </select>
+
+    <!-- 统计非取消订单的实付金额总和 -->
+    <select id="sumPayAmountExcludeCancelled" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(pay_amount), 0) FROM mall_order WHERE status != 'CANCELLED'
+    </select>
+
+    <!-- 查询待归档订单 -->
+    <select id="findArchiveCandidates" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM mall_order ord
+        WHERE ord.status IN ('COMPLETED', 'CANCELLED')
+          AND ord.created_at &lt; #{threshold}
+        ORDER BY ord.id ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据ID列表批量删除订单 -->
+    <delete id="deleteByIds">
+        DELETE FROM mall_order
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,115 @@
+server:
+  address: 0.0.0.0
+  port: 8080
+
+spring:
+  application:
+    name: shoppingMall
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:mall}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:admin}
+    password: ${RABBITMQ_PASS:123456}
+    virtual-host: /
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: site.geekie.shop.shoppingmall.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+jwt:
+  secret: ${JWT_SECRET:dGhpc2lzYXJhbmRvbWtleWZvcmhtYWMyNTZhbGdvcml0aG0xMjM0NTY3ODkw}
+  expiration: 86400000  # 24 hours
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+
+alipay:
+  app-id: ${ALIPAY_APP_ID:支付宝号}
+  private-key: ${ALIPAY_PRIVATE_KEY:支付宝私钥}
+  alipay-public-key: ${ALIPAY_PUBLIC_KEY:支付宝公钥}
+  server-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+  format: json
+  charset: UTF-8
+  sign-type: RSA2
+  notify-url: ${ALIPAY_NOTIFY_URL:https://anders-unattractable-coinstantaneously.ngrok-free.dev/api/v1/payment/alipay/notify}
+  return-url: ${ALIPAY_RETURN_URL:http://localhost:8080/api/v1/payment/alipay/return}
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+wxpay:
+  enabled: ${WXPAY_ENABLED:false}  # 微信支付开关，默认禁用（需要真实商户信息才能启用）
+  app-id: ${WXPAY_APP_ID:wx1234567890abcdef}
+  mch-id: ${WXPAY_MCH_ID:1234567890}
+  api-v3-key: ${WXPAY_API_V3_KEY:ABCDEF1234567890ABCDEF1234567890}
+  serial-no: ${WXPAY_SERIAL_NO:1234567890ABCDEF1234567890ABCDEF12345678}
+  private-key-string: ${WXPAY_PRIVATE_KEY:}
+  private-key-path: ${WXPAY_PRIVATE_KEY_PATH}
+  notify-url: ${WXPAY_NOTIFY_URL:https://your-domain.ngrok-free.dev/api/v1/payment/wechat/notify}
+  refund-notify-url: ${WXPAY_REFUND_NOTIFY_URL:https://your-domain.ngrok-free.dev/api/v1/payment/wechat/refund/notify}
+
+stripe:
+  enabled: ${STRIPE_ENABLED:true}  # Stripe 支付开关
+  secret-key: ${STRIPE_SECRET_KEY:sk打头的密钥}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec打头的密钥}
+  refund-webhook-secret: ${STRIPE_REFUND_WEBHOOK_SECRET:whsec打头的密钥}
+  success-url: ${STRIPE_SUCCESS_URL:http://localhost:3000/payment/stripe/result}
+  cancel-url: ${STRIPE_CANCEL_URL:http://localhost:3000/payment/{ORDER_NO}}
+  test-mode: ${STRIPE_TEST_MODE:true}
+  product-image-base-url: ${PRODUCT_IMAGE_BASE_URL:http://localhost:3000}
+
+logging:
+  level:
+    root: info
+    site.geekie.shop.shoppingmall: info
+    org.springframework.security: warn
+
+xxl:
+  job:
+    admin:
+      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://localhost:8088/xxl-job-admin}
+    accessToken: ${XXL_JOB_ACCESS_TOKEN:}
+    executor:
+      appname: springmall-executor
+      address: ${XXL_JOB_EXECUTOR_ADDRESS:}
+      ip: ${XXL_JOB_EXECUTOR_IP:}
+      port: ${XXL_JOB_EXECUTOR_PORT:9999}
+      logpath: ${XXL_JOB_LOG_PATH:/data/applogs/xxl-job/jobhandler}
+      logretentiondays: 30
